@@ -5,64 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Journal & Mood Tracker</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#6366f1">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="bg-decoration" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
   <div class="app">
-    <header>
+    <header class="hero">
+      <div class="hero-badge">✨ Mood Tracker</div>
       <h1>📓 Daily Journal</h1>
-      <p class="subtitle">Catat hari-harimu & lacak suasana hati</p>
+      <p class="subtitle">Catat hari-harimu & lacak suasana hati dengan lebih mudah</p>
     </header>
 
     <main>
+      <!-- Stats Dashboard -->
+      <section class="stats-grid" id="stats-grid" aria-label="Ringkasan statistik">
+        <article class="stat-card stat-total">
+          <div class="stat-icon">📝</div>
+          <div class="stat-body">
+            <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-label">Total Catatan</span>
+          </div>
+        </article>
+        <article class="stat-card stat-week">
+          <div class="stat-icon">📅</div>
+          <div class="stat-body">
+            <span class="stat-value" id="stat-week">0</span>
+            <span class="stat-label">Minggu Ini</span>
+          </div>
+        </article>
+        <article class="stat-card stat-streak">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-body">
+            <span class="stat-value" id="stat-streak">0</span>
+            <span class="stat-label">Hari Berturut</span>
+          </div>
+        </article>
+        <article class="stat-card stat-mood">
+          <div class="stat-icon" id="stat-mood-icon">😊</div>
+          <div class="stat-body">
+            <span class="stat-value stat-value-sm" id="stat-mood">—</span>
+            <span class="stat-label">Mood Dominan</span>
+          </div>
+        </article>
+      </section>
+
       <!-- Entry Form -->
       <section class="card form-section">
-        <h2>Catatan Baru</h2>
+        <div class="section-header">
+          <span class="section-icon">✏️</span>
+          <div>
+            <h2>Catatan Baru</h2>
+            <p class="section-desc">Tulis perasaan dan kejadian hari ini</p>
+          </div>
+        </div>
         <form id="journal-form">
           <div class="form-group">
-            <label for="entry-date">Tanggal</label>
+            <label for="entry-date">📆 Tanggal</label>
             <input type="date" id="entry-date" required>
           </div>
 
           <div class="form-group">
-            <label>Mood</label>
+            <label>💭 Bagaimana perasaanmu?</label>
             <div class="mood-selector" id="mood-selector">
-              <button type="button" class="mood-btn" data-mood="senang" title="Senang">😊</button>
-              <button type="button" class="mood-btn" data-mood="biasa" title="Biasa">😐</button>
-              <button type="button" class="mood-btn" data-mood="sedih" title="Sedih">😢</button>
-              <button type="button" class="mood-btn" data-mood="marah" title="Marah">😠</button>
-              <button type="button" class="mood-btn" data-mood="cemas" title="Cemas">😰</button>
+              <button type="button" class="mood-btn" data-mood="senang" title="Senang">
+                <span class="mood-emoji">😊</span>
+                <span class="mood-name">Senang</span>
+              </button>
+              <button type="button" class="mood-btn" data-mood="biasa" title="Biasa">
+                <span class="mood-emoji">😐</span>
+                <span class="mood-name">Biasa</span>
+              </button>
+              <button type="button" class="mood-btn" data-mood="sedih" title="Sedih">
+                <span class="mood-emoji">😢</span>
+                <span class="mood-name">Sedih</span>
+              </button>
+              <button type="button" class="mood-btn" data-mood="marah" title="Marah">
+                <span class="mood-emoji">😠</span>
+                <span class="mood-name">Marah</span>
+              </button>
+              <button type="button" class="mood-btn" data-mood="cemas" title="Cemas">
+                <span class="mood-emoji">😰</span>
+                <span class="mood-name">Cemas</span>
+              </button>
             </div>
             <input type="hidden" id="selected-mood" required>
           </div>
 
           <div class="form-group">
-            <label for="entry-text">Catatan</label>
-            <textarea id="entry-text" rows="4" placeholder="Apa yang terjadi hari ini?" required></textarea>
+            <label for="entry-text">📖 Catatan</label>
+            <textarea id="entry-text" rows="4" placeholder="Apa yang terjadi hari ini? Ceritakan dengan bebas..." required></textarea>
           </div>
 
-          <button type="submit" class="btn-primary" id="submit-btn">Simpan</button>
-          <button type="button" class="btn-secondary" id="cancel-btn" style="display:none">Batal</button>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="submit-btn">
+              <span class="btn-icon">💾</span> Simpan
+            </button>
+            <button type="button" class="btn-secondary" id="cancel-btn" style="display:none">Batal</button>
+          </div>
         </form>
       </section>
 
-      <!-- Mood Chart -->
+      <!-- Mood Chart & Progress -->
       <section class="card chart-section">
-        <h2>Mood Minggu Ini</h2>
-        <canvas id="mood-chart"></canvas>
+        <div class="section-header">
+          <span class="section-icon">📊</span>
+          <div>
+            <h2>Mood Minggu Ini</h2>
+            <p class="section-desc">Distribusi suasana hati 7 hari terakhir</p>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="mood-chart"></canvas>
+        </div>
+        <div class="mood-bars" id="mood-bars"></div>
       </section>
 
       <!-- Search & Feed -->
       <section class="feed-section">
+        <div class="section-header feed-header">
+          <span class="section-icon">📚</span>
+          <div>
+            <h2>Arsip Catatan</h2>
+            <p class="section-desc">Semua catatan jurnal kamu</p>
+          </div>
+        </div>
         <div class="search-bar">
-          <input type="text" id="search-input" placeholder="Cari catatan...">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Cari catatan berdasarkan kata kunci atau tanggal...">
         </div>
         <div id="entries-feed"></div>
-        <p id="empty-state" class="empty-state">Belum ada catatan. Mulai tulis hari ini! ✨</p>
+        <div id="empty-state" class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p class="empty-title">Belum ada catatan</p>
+          <p class="empty-desc">Mulai tulis hari ini dan lacak perjalanan emosimu! ✨</p>
+        </div>
       </section>
     </main>
+
+    <footer class="app-footer">
+      <p>Daily Journal & Mood Tracker · Data disimpan lokal di perangkatmu</p>
+    </footer>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

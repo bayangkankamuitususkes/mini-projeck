@@ -32,8 +32,14 @@ function init() {
   cancelBtn.addEventListener('click', resetForm);
   searchInput.addEventListener('input', renderFeed);
 
+  refreshDashboard();
+}
+
+function refreshDashboard() {
+  renderStats();
   renderFeed();
   renderChart();
+  renderMoodBars();
 }
 
 function getEntries() {
@@ -42,6 +48,93 @@ function getEntries() {
 
 function saveEntries(entries) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function getWeekEntries(entries) {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  weekAgo.setHours(0, 0, 0, 0);
+  return entries.filter(e => new Date(e.date + 'T00:00:00') >= weekAgo);
+}
+
+function getStreak(entries) {
+  if (!entries.length) return 0;
+
+  const dates = [...new Set(entries.map(e => e.date))].sort((a, b) => b.localeCompare(a));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const latest = new Date(dates[0] + 'T00:00:00');
+  const diffDays = Math.round((today - latest) / 86400000);
+  if (diffDays > 1) return 0;
+
+  let streak = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const prev = new Date(dates[i - 1] + 'T00:00:00');
+    const curr = new Date(dates[i] + 'T00:00:00');
+    if (Math.round((prev - curr) / 86400000) === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function getDominantMood(entries) {
+  const weekEntries = getWeekEntries(entries);
+  if (!weekEntries.length) return null;
+
+  const counts = {};
+  weekEntries.forEach(e => { counts[e.mood] = (counts[e.mood] || 0) + 1; });
+
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function getMoodCounts(entries) {
+  const recent = getWeekEntries(entries);
+  const counts = {};
+  Object.keys(MOOD_EMOJIS).forEach(m => counts[m] = 0);
+  recent.forEach(e => { if (counts[e.mood] !== undefined) counts[e.mood]++; });
+  return counts;
+}
+
+function renderStats() {
+  const entries = getEntries();
+  const weekEntries = getWeekEntries(entries);
+  const dominant = getDominantMood(entries);
+  const streak = getStreak(entries);
+
+  $('#stat-total').textContent = entries.length;
+  $('#stat-week').textContent = weekEntries.length;
+  $('#stat-streak').textContent = streak;
+
+  const moodEl = $('#stat-mood');
+  const moodIcon = $('#stat-mood-icon');
+  if (dominant) {
+    moodEl.textContent = MOOD_LABELS[dominant];
+    moodIcon.textContent = MOOD_EMOJIS[dominant];
+  } else {
+    moodEl.textContent = '—';
+    moodIcon.textContent = '😊';
+  }
+}
+
+function renderMoodBars() {
+  const counts = getMoodCounts(getEntries());
+  const max = Math.max(...Object.values(counts), 1);
+  const barsEl = $('#mood-bars');
+
+  barsEl.innerHTML = Object.keys(MOOD_EMOJIS).map(mood => {
+    const count = counts[mood];
+    const pct = Math.round((count / max) * 100);
+    return `
+      <div class="mood-bar-row">
+        <span class="mood-bar-label">${MOOD_EMOJIS[mood]} ${MOOD_LABELS[mood]}</span>
+        <div class="mood-bar-track">
+          <div class="mood-bar-fill" style="width:${pct}%;background:${MOOD_COLORS[mood]}"></div>
+        </div>
+        <span class="mood-bar-count">${count}</span>
+      </div>
+    `;
+  }).join('');
 }
 
 function handleSubmit(e) {
@@ -62,8 +155,7 @@ function handleSubmit(e) {
 
   saveEntries(entries);
   resetForm();
-  renderFeed();
-  renderChart();
+  refreshDashboard();
 }
 
 function resetForm() {
@@ -72,7 +164,7 @@ function resetForm() {
   moodInput.value = '';
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
   editingId = null;
-  submitBtn.textContent = 'Simpan';
+  submitBtn.innerHTML = '<span class="btn-icon">💾</span> Simpan';
   cancelBtn.style.display = 'none';
 }
 
@@ -86,7 +178,7 @@ function editEntry(id) {
   document.querySelectorAll('.mood-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.mood === entry.mood);
   });
-  submitBtn.textContent = 'Perbarui';
+  submitBtn.innerHTML = '<span class="btn-icon">✅</span> Perbarui';
   cancelBtn.style.display = 'block';
   form.scrollIntoView({ behavior: 'smooth' });
 }
@@ -96,8 +188,7 @@ function deleteEntry(id) {
   const entries = getEntries().filter(e => e.id !== id);
   saveEntries(entries);
   if (editingId === id) resetForm();
-  renderFeed();
-  renderChart();
+  refreshDashboard();
 }
 
 function renderFeed() {
@@ -110,21 +201,32 @@ function renderFeed() {
   if (!entries.length) {
     feed.innerHTML = '';
     emptyState.style.display = 'block';
-    emptyState.textContent = query ? 'Tidak ada hasil ditemukan.' : 'Belum ada catatan. Mulai tulis hari ini! ✨';
+    if (query) {
+      emptyState.querySelector('.empty-icon').textContent = '🔎';
+      emptyState.querySelector('.empty-title').textContent = 'Tidak ada hasil';
+      emptyState.querySelector('.empty-desc').textContent = 'Coba kata kunci lain atau hapus pencarian.';
+    } else {
+      emptyState.querySelector('.empty-icon').textContent = '📭';
+      emptyState.querySelector('.empty-title').textContent = 'Belum ada catatan';
+      emptyState.querySelector('.empty-desc').textContent = 'Mulai tulis hari ini dan lacak perjalanan emosimu! ✨';
+    }
     return;
   }
 
   emptyState.style.display = 'none';
   feed.innerHTML = entries.map(e => `
-    <div class="entry-card">
+    <div class="entry-card mood-${e.mood}">
       <div class="entry-header">
         <span class="entry-date">${formatDate(e.date)}</span>
-        <span class="entry-mood" title="${MOOD_LABELS[e.mood]}">${MOOD_EMOJIS[e.mood]}</span>
+        <span class="entry-mood-badge mood-${e.mood}">
+          <span class="entry-mood-emoji">${MOOD_EMOJIS[e.mood]}</span>
+          ${MOOD_LABELS[e.mood]}
+        </span>
       </div>
       <div class="entry-text">${escapeHtml(e.text)}</div>
       <div class="entry-actions">
-        <button class="btn-edit" onclick="editEntry('${e.id}')">Edit</button>
-        <button class="btn-delete" onclick="deleteEntry('${e.id}')">Hapus</button>
+        <button class="btn-edit" onclick="editEntry('${e.id}')">✏️ Edit</button>
+        <button class="btn-delete" onclick="deleteEntry('${e.id}')">🗑️ Hapus</button>
       </div>
     </div>
   `).join('');
@@ -143,16 +245,7 @@ function escapeHtml(str) {
 }
 
 function renderChart() {
-  const entries = getEntries();
-  const now = new Date();
-  const weekAgo = new Date(now);
-  weekAgo.setDate(weekAgo.getDate() - 7);
-
-  const recent = entries.filter(e => new Date(e.date) >= weekAgo);
-  const counts = {};
-  Object.keys(MOOD_EMOJIS).forEach(m => counts[m] = 0);
-  recent.forEach(e => { if (counts[e.mood] !== undefined) counts[e.mood]++; });
-
+  const counts = getMoodCounts(getEntries());
   const labels = Object.keys(counts).map(m => `${MOOD_EMOJIS[m]} ${MOOD_LABELS[m]}`);
   const data = Object.values(counts);
   const colors = Object.keys(counts).map(m => MOOD_COLORS[m]);
@@ -162,11 +255,29 @@ function renderChart() {
 
   moodChart = new Chart(ctx, {
     type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors,
+        borderWidth: 3,
+        borderColor: '#fff',
+        hoverOffset: 8
+      }]
+    },
     options: {
       responsive: true,
+      cutout: '62%',
       plugins: {
-        legend: { position: 'bottom', labels: { padding: 14, font: { size: 13 } } }
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 16,
+            font: { size: 12, family: 'Inter, sans-serif', weight: '500' },
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        }
       }
     }
   });
