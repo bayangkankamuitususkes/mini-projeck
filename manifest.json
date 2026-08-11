@@ -4,8 +4,8 @@
   "description": "Catat hari-harimu & lacak suasana hati",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#6366f1",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
   "icons": [
     { "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>", "sizes": "any", "type": "image/svg+xml" }
   ]

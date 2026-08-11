@@ -261,7 +261,7 @@ function renderChart() {
         data,
         backgroundColor: colors,
         borderWidth: 3,
-        borderColor: '#fff',
+        borderColor: '#18181b',
         hoverOffset: 8
       }]
     },
@@ -273,6 +273,7 @@ function renderChart() {
           position: 'bottom',
           labels: {
             padding: 16,
+            color: '#a1a1aa',
             font: { size: 12, family: 'Inter, sans-serif', weight: '500' },
             usePointStyle: true,
             pointStyle: 'circle'
