@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Journal & Mood Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>📓 Daily Journal</h1>
+      <p class="subtitle">Catat hari-harimu & lacak suasana hati</p>
+    </header>
+
+    <main>
+      <!-- Entry Form -->
+      <section class="card form-section">
+        <h2>Catatan Baru</h2>
+        <form id="journal-form">
+          <div class="form-group">
+            <label for="entry-date">Tanggal</label>
+            <input type="date" id="entry-date" required>
+          </div>
+
+          <div class="form-group">
+            <label>Mood</label>
+            <div class="mood-selector" id="mood-selector">
+              <button type="button" class="mood-btn" data-mood="senang" title="Senang">😊</button>
+              <button type="button" class="mood-btn" data-mood="biasa" title="Biasa">😐</button>
+              <button type="button" class="mood-btn" data-mood="sedih" title="Sedih">😢</button>
+              <button type="button" class="mood-btn" data-mood="marah" title="Marah">😠</button>
+              <button type="button" class="mood-btn" data-mood="cemas" title="Cemas">😰</button>
+            </div>
+            <input type="hidden" id="selected-mood" required>
+          </div>
+
+          <div class="form-group">
+            <label for="entry-text">Catatan</label>
+            <textarea id="entry-text" rows="4" placeholder="Apa yang terjadi hari ini?" required></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary" id="submit-btn">Simpan</button>
+          <button type="button" class="btn-secondary" id="cancel-btn" style="display:none">Batal</button>
+        </form>
+      </section>
+
+      <!-- Mood Chart -->
+      <section class="card chart-section">
+        <h2>Mood Minggu Ini</h2>
+        <canvas id="mood-chart"></canvas>
+      </section>
+
+      <!-- Search & Feed -->
+      <section class="feed-section">
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="Cari catatan...">
+        </div>
+        <div id="entries-feed"></div>
+        <p id="empty-state" class="empty-state">Belum ada catatan. Mulai tulis hari ini! ✨</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
