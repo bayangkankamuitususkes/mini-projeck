@@ -274,7 +274,7 @@ function renderChart() {
           labels: {
             padding: 16,
             color: '#a1a1aa',
-            font: { size: 12, family: 'Inter, sans-serif', weight: '500' },
+            font: { size: 12, family: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Inter, sans-serif', weight: '500' },
             usePointStyle: true,
             pointStyle: 'circle'
           }
