@@ -302,7 +302,19 @@ body {
   color: var(--text);
 }
 
-input[type="date"], textarea, #search-input {
+.datetime-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 380px) {
+  .datetime-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+input[type="date"], input[type="time"], textarea, #search-input {
   width: 100%;
   padding: 12px 14px;
   border: 1.5px solid var(--border-strong);

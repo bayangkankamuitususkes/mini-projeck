@@ -17,6 +17,7 @@ let moodChart = null;
 const $ = (s) => document.querySelector(s);
 const form = $('#journal-form');
 const dateInput = $('#entry-date');
+const timeInput = $('#entry-time');
 const moodInput = $('#selected-mood');
 const textInput = $('#entry-text');
 const searchInput = $('#search-input');
@@ -34,6 +35,7 @@ const cancelBtn = $('#cancel-btn');
 
 function init() {
   dateInput.value = new Date().toISOString().split('T')[0];
+  timeInput.value = getCurrentTime();
 
   document.querySelectorAll('.mood-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -83,7 +85,39 @@ function refreshDashboard() {
 }
 
 function getEntries() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]').map(normalizeEntry);
+}
+
+function normalizeEntry(entry) {
+  if (entry.datetime) {
+    const [date] = entry.datetime.split('T');
+    return { ...entry, date };
+  }
+  if (entry.date) {
+    return { ...entry, datetime: `${entry.date}T00:00` };
+  }
+  return entry;
+}
+
+function getEntryDatetime(entry) {
+  return entry.datetime || `${entry.date}T00:00`;
+}
+
+function getEntryDate(entry) {
+  return getEntryDatetime(entry).split('T')[0];
+}
+
+function getEntryTime(entry) {
+  return getEntryDatetime(entry).split('T')[1] || '00:00';
+}
+
+function getCurrentTime() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+function buildDatetime(date, time) {
+  return `${date}T${time || '00:00'}`;
 }
 
 function saveEntries(entries) {
@@ -94,13 +128,13 @@ function getWeekEntries(entries) {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   weekAgo.setHours(0, 0, 0, 0);
-  return entries.filter(e => new Date(e.date + 'T00:00:00') >= weekAgo);
+  return entries.filter(e => new Date(getEntryDate(e) + 'T00:00:00') >= weekAgo);
 }
 
 function getStreak(entries) {
   if (!entries.length) return 0;
 
-  const dates = [...new Set(entries.map(e => e.date))].sort((a, b) => b.localeCompare(a));
+  const dates = [...new Set(entries.map(e => getEntryDate(e)))].sort((a, b) => b.localeCompare(a));
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -182,7 +216,13 @@ function handleSubmit(e) {
   if (!moodInput.value) { alert('Pilih mood terlebih dahulu!'); return; }
 
   const entries = getEntries();
-  const data = { date: dateInput.value, mood: moodInput.value, text: textInput.value.trim() };
+  const datetime = buildDatetime(dateInput.value, timeInput.value);
+  const data = {
+    datetime,
+    date: dateInput.value,
+    mood: moodInput.value,
+    text: textInput.value.trim()
+  };
 
   if (editingId) {
     const idx = entries.findIndex(en => en.id === editingId);
@@ -201,6 +241,7 @@ function handleSubmit(e) {
 function resetForm() {
   form.reset();
   dateInput.value = new Date().toISOString().split('T')[0];
+  timeInput.value = getCurrentTime();
   moodInput.value = '';
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
   editingId = null;
@@ -212,7 +253,8 @@ function editEntry(id) {
   const entry = getEntries().find(e => e.id === id);
   if (!entry) return;
   editingId = id;
-  dateInput.value = entry.date;
+  dateInput.value = getEntryDate(entry);
+  timeInput.value = getEntryTime(entry);
   textInput.value = entry.text;
   moodInput.value = entry.mood;
   document.querySelectorAll('.mood-btn').forEach(b => {
@@ -276,11 +318,12 @@ function getDateRange() {
 
 function matchesDateRange(entry, range) {
   if (!range) return true;
-  return entry.date >= range.from && entry.date <= range.to;
+  const entryDate = getEntryDate(entry);
+  return entryDate >= range.from && entryDate <= range.to;
 }
 
 function entryHaystack(entry) {
-  return `${entry.text.toLowerCase()} ${entry.date} ${MOOD_LABELS[entry.mood].toLowerCase()}`;
+  return `${entry.text.toLowerCase()} ${getEntryDate(entry)} ${getEntryTime(entry)} ${MOOD_LABELS[entry.mood].toLowerCase()}`;
 }
 
 function matchesSearch(entry, query) {
@@ -344,14 +387,14 @@ function sortEntries(entries) {
   const sorted = [...entries];
 
   if (sortBy === 'date-asc') {
-    sorted.sort((a, b) => a.date.localeCompare(b.date));
+    sorted.sort((a, b) => getEntryDatetime(a).localeCompare(getEntryDatetime(b)));
   } else if (sortBy === 'mood') {
     sorted.sort((a, b) => {
       const moodDiff = MOOD_ORDER[a.mood] - MOOD_ORDER[b.mood];
-      return moodDiff !== 0 ? moodDiff : b.date.localeCompare(a.date);
+      return moodDiff !== 0 ? moodDiff : getEntryDatetime(b).localeCompare(getEntryDatetime(a));
     });
   } else {
-    sorted.sort((a, b) => b.date.localeCompare(a.date));
+    sorted.sort((a, b) => getEntryDatetime(b).localeCompare(getEntryDatetime(a)));
   }
 
   return sorted;
@@ -496,7 +539,7 @@ function renderFeed() {
   feed.innerHTML = entries.map(e => `
     <div class="entry-card mood-${e.mood}">
       <div class="entry-header">
-        <span class="entry-date">${formatDate(e.date)}</span>
+        <span class="entry-date">${formatDateTime(e)}</span>
         <span class="entry-mood-badge mood-${e.mood}">
           <span class="entry-mood-emoji">${MOOD_EMOJIS[e.mood]}</span>
           ${MOOD_LABELS[e.mood]}
@@ -511,10 +554,13 @@ function renderFeed() {
   `).join('');
 }
 
-function formatDate(dateStr) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
+function formatDateTime(entry) {
+  const dateStr = getEntryDate(entry);
+  const timeStr = getEntryTime(entry);
+  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
+  return `${formatted} · ⏰ ${timeStr}`;
 }
 
 function escapeHtml(str) {

@@ -47,7 +47,7 @@ Saat aplikasi terbuka, Anda akan melihat tiga bagian:
 │  📓 Daily Journal               │  ← Header / judul
 ├─────────────────────────────────┤
 │  Catatan Baru                   │  ← Form menulis jurnal
-│  [Tanggal] [Mood] [Catatan]     │
+│  [Tanggal & Waktu] [Mood] [Catatan] │
 ├─────────────────────────────────┤
 │  Mood Minggu Ini                │  ← Grafik donat mood
 │  [Chart]                        │
@@ -69,7 +69,7 @@ Jika belum pernah menulis catatan, akan muncul pesan:
 
 | Langkah | Aksi |
 |---------|------|
-| **1** | Isi **Tanggal** — secara default sudah terisi tanggal hari ini |
+| **1** | Isi **Tanggal & Waktu** — tanggal default hari ini, waktu default jam sekarang (format 24 jam) |
 | **2** | Pilih **Mood** — klik salah satu emoji mood (wajib) |
 | **3** | Tulis **Catatan** — deskripsikan hari Anda |
 | **4** | Klik tombol **Simpan** |
@@ -77,7 +77,7 @@ Jika belum pernah menulis catatan, akan muncul pesan:
 ### Contoh catatan
 
 ```
-Tanggal : 11 Agustus 2026
+Tanggal : Rabu, 12 Agustus 2026 · ⏰ 14:30
 Mood    : 😊 Senang
 Catatan : Hari ini selesai presentasi proyek. Merasa lega dan bangga
           dengan hasil tim. Besok rencananya istirahat sejenak.
@@ -87,8 +87,10 @@ Catatan : Hari ini selesai presentasi proyek. Merasa lega dan bangga
 
 - **Mood wajib dipilih** — jika belum, akan muncul peringatan *"Pilih mood terlebih dahulu!"*
 - **Teks catatan wajib diisi** — tidak boleh dikosongkan
-- Anda bisa menulis **lebih dari satu catatan** di tanggal yang sama
-- Catatan terbaru selalu muncul **di atas** daftar
+- Anda bisa menulis **lebih dari satu catatan** di tanggal yang sama (dengan waktu berbeda)
+- Catatan terbaru selalu muncul **di atas** daftar (diurutkan berdasarkan tanggal + waktu)
+- **Waktu disimpan lokal** di browser Anda (timezone perangkat, tanpa konversi server)
+- Catatan lama yang hanya punya tanggal otomatis ditampilkan dengan waktu **00:00**
 
 ---
 
@@ -155,7 +157,7 @@ Ditemukan X catatan
 
 - Pencarian **real-time** — hasil langsung berubah saat mengetik
 - **Case-insensitive** (tidak peduli huruf besar/kecil)
-- Mencari di **isi catatan**, **tanggal**, dan **nama mood**
+- Mencari di **isi catatan**, **tanggal**, **waktu**, dan **nama mood**
 - **Highlight** — kata kunci yang cocok ditandai kuning di hasil
 - Mendukung operator logika:
   - `AND` — semua kata harus cocok (contoh: `kerja AND senang`)
@@ -306,7 +308,7 @@ Aplikasi ini mendukung **Progressive Web App (PWA)**, sehingga bisa diinstal sep
 
 ### Q: Bisa menulis catatan untuk tanggal kemarin?
 
-**A:** **Ya.** Ubah field **Tanggal** sebelum menyimpan. Berguna jika Anda lupa menulis kemarin dan ingin melengkapi catatan.
+**A:** **Ya.** Ubah field **Tanggal** dan **Waktu** sebelum menyimpan. Berguna jika Anda lupa menulis kemarin dan ingin melengkapi catatan.
 
 ---
 
