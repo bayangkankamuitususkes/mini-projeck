@@ -70,10 +70,13 @@
         </div>
         <form id="journal-form">
           <div class="form-group">
-            <label for="entry-date">📆 Tanggal & Waktu</label>
+            <label for="entry-date">
+              📆 Tanggal & Waktu Auto-Update
+              <span class="live-datetime-badge" id="live-datetime-badge" title="Waktu otomatis update. Klik field untuk edit manual.">⏱️ Live</span>
+            </label>
             <div class="datetime-row">
               <input type="date" id="entry-date" required aria-label="Tanggal">
-              <input type="time" id="entry-time" required aria-label="Waktu">
+              <input type="time" id="entry-time" required aria-label="Waktu" step="60">
             </div>
           </div>
 

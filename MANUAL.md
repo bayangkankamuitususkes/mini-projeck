@@ -69,7 +69,8 @@ Jika belum pernah menulis catatan, akan muncul pesan:
 
 | Langkah | Aksi |
 |---------|------|
-| **1** | Isi **Tanggal & Waktu** — tanggal default hari ini, waktu default jam sekarang (format 24 jam) |
+| **1** | **Tanggal & Waktu** terisi otomatis — tanggal hari ini dan waktu sekarang (format 24 jam), update real-time setiap detik |
+| **1b** | (Opsional) Klik field tanggal/waktu untuk edit manual — auto-update berhenti sementara saat field difokuskan |
 | **2** | Pilih **Mood** — klik salah satu emoji mood (wajib) |
 | **3** | Tulis **Catatan** — deskripsikan hari Anda |
 | **4** | Klik tombol **Simpan** |
@@ -89,6 +90,9 @@ Catatan : Hari ini selesai presentasi proyek. Merasa lega dan bangga
 - **Teks catatan wajib diisi** — tidak boleh dikosongkan
 - Anda bisa menulis **lebih dari satu catatan** di tanggal yang sama (dengan waktu berbeda)
 - Catatan terbaru selalu muncul **di atas** daftar (diurutkan berdasarkan tanggal + waktu)
+- **Tanggal & waktu auto-update** — badge **⏱️ Live** menandakan waktu terus diperbarui otomatis
+- Jika Anda edit tanggal/waktu manual, auto-update berhenti untuk field tersebut
+- Saat **edit catatan** lama, auto-update dimatikan agar waktu tersimpan tidak berubah
 - **Waktu disimpan lokal** di browser Anda (timezone perangkat, tanpa konversi server)
 - Catatan lama yang hanya punya tanggal otomatis ditampilkan dengan waktu **00:00**
 

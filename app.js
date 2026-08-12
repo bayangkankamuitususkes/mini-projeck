@@ -13,11 +13,16 @@ const DATE_PRESET_LABELS = {
 
 let editingId = null;
 let moodChart = null;
+let datetimeInterval = null;
+let dateUserModified = false;
+let timeUserModified = false;
+let datetimeFieldFocused = null;
 
 const $ = (s) => document.querySelector(s);
 const form = $('#journal-form');
 const dateInput = $('#entry-date');
 const timeInput = $('#entry-time');
+const liveDatetimeBadge = $('#live-datetime-badge');
 const moodInput = $('#selected-mood');
 const textInput = $('#entry-text');
 const searchInput = $('#search-input');
@@ -34,8 +39,8 @@ const submitBtn = $('#submit-btn');
 const cancelBtn = $('#cancel-btn');
 
 function init() {
-  dateInput.value = new Date().toISOString().split('T')[0];
-  timeInput.value = getCurrentTime();
+  initDateTimeAutoUpdate();
+  setupDateTimeInputHandlers();
 
   document.querySelectorAll('.mood-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -114,6 +119,65 @@ function getEntryTime(entry) {
 function getCurrentTime() {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+function getLocalDateString() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function shouldAutoUpdateDateTime() {
+  return !editingId;
+}
+
+function updateDateTimeFields() {
+  if (!shouldAutoUpdateDateTime()) return;
+
+  if (datetimeFieldFocused !== 'date' && !dateUserModified) {
+    dateInput.value = getLocalDateString();
+  }
+  if (datetimeFieldFocused !== 'time' && !timeUserModified) {
+    timeInput.value = getCurrentTime();
+  }
+}
+
+function updateLiveBadge() {
+  const isLive = shouldAutoUpdateDateTime() && (!dateUserModified || !timeUserModified);
+  liveDatetimeBadge.hidden = !isLive;
+  liveDatetimeBadge.classList.toggle('is-live', isLive);
+}
+
+function initDateTimeAutoUpdate() {
+  updateDateTimeFields();
+  updateLiveBadge();
+  if (datetimeInterval) clearInterval(datetimeInterval);
+  datetimeInterval = setInterval(() => {
+    updateDateTimeFields();
+    updateLiveBadge();
+  }, 1000);
+}
+
+function setupDateTimeInputHandlers() {
+  dateInput.addEventListener('focus', () => { datetimeFieldFocused = 'date'; });
+  timeInput.addEventListener('focus', () => { datetimeFieldFocused = 'time'; });
+  dateInput.addEventListener('blur', () => { datetimeFieldFocused = null; });
+  timeInput.addEventListener('blur', () => { datetimeFieldFocused = null; });
+  dateInput.addEventListener('input', () => {
+    dateUserModified = true;
+    updateLiveBadge();
+  });
+  timeInput.addEventListener('input', () => {
+    timeUserModified = true;
+    updateLiveBadge();
+  });
+}
+
+function resetDateTimeAutoState() {
+  dateUserModified = false;
+  timeUserModified = false;
+  datetimeFieldFocused = null;
+  updateDateTimeFields();
+  updateLiveBadge();
 }
 
 function buildDatetime(date, time) {
@@ -240,11 +304,10 @@ function handleSubmit(e) {
 
 function resetForm() {
   form.reset();
-  dateInput.value = new Date().toISOString().split('T')[0];
-  timeInput.value = getCurrentTime();
+  editingId = null;
+  resetDateTimeAutoState();
   moodInput.value = '';
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-  editingId = null;
   submitBtn.innerHTML = '<span class="btn-icon">💾</span> Simpan';
   cancelBtn.style.display = 'none';
 }
@@ -253,8 +316,11 @@ function editEntry(id) {
   const entry = getEntries().find(e => e.id === id);
   if (!entry) return;
   editingId = id;
+  dateUserModified = true;
+  timeUserModified = true;
   dateInput.value = getEntryDate(entry);
   timeInput.value = getEntryTime(entry);
+  updateLiveBadge();
   textInput.value = entry.text;
   moodInput.value = entry.mood;
   document.querySelectorAll('.mood-btn').forEach(b => {
