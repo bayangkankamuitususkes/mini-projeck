@@ -39,6 +39,21 @@ body {
   color-scheme: dark;
 }
 
+.emoji,
+.stat-icon,
+.section-icon,
+.mood-emoji,
+.hero-icon,
+.hero-badge,
+.empty-icon,
+.search-icon,
+.btn-icon,
+.entry-mood-emoji,
+.mood-bar-label,
+.form-group label {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
 /* Background decoration */
 .bg-decoration {
   position: fixed;
@@ -124,13 +139,27 @@ body {
 }
 
 .hero h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
   font-size: 2rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.hero-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.hero-title {
   background: linear-gradient(135deg, #fafafa 0%, var(--accent-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -0.02em;
 }
 
 .subtitle {
@@ -171,8 +200,12 @@ body {
   font-size: 1.75rem;
   width: 48px;
   height: 48px;
-  display: grid;
-  place-items: center;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  overflow: visible;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
@@ -233,8 +266,12 @@ body {
   font-size: 1.5rem;
   width: 44px;
   height: 44px;
-  display: grid;
-  place-items: center;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  overflow: visible;
   background: linear-gradient(135deg, #27272a, #18181b);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -310,7 +347,12 @@ input::placeholder, textarea::placeholder {
   transition: all var(--transition);
 }
 
-.mood-emoji { font-size: 1.5rem; line-height: 1; }
+.mood-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: block;
+  overflow: visible;
+}
 
 .mood-name {
   font-size: 0.65rem;
@@ -650,6 +692,7 @@ input::placeholder, textarea::placeholder {
 
 @media (max-width: 539px) {
   .hero h1 { font-size: 1.6rem; }
+  .hero-icon { font-size: 1.6rem; }
 
   .mood-selector {
     grid-template-columns: repeat(3, 1fr);
