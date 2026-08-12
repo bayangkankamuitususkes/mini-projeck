@@ -139,31 +139,65 @@ Bagian **"Mood Minggu Ini"** menampilkan diagram donat (pie chart) yang merangku
 
 ---
 
-## 6. Mencari Catatan
+## 6. Mencari & Memfilter Catatan
 
-Di bagian bawah halaman terdapat kolom pencarian:
+Di bagian **Arsip Catatan** terdapat panel pencarian dan filter lanjutan:
 
 ```
-🔍 [ Cari catatan... ]
+🔍 [ Cari kata kunci, tanggal, mood... ]
+[ Filter Mood: 😊 😐 😢 😠 😰 ]
+[ Periode: Semua | Hari Ini | Minggu Ini | Bulan Ini | Kustom ]
+[ Urutkan ▼ ]  [ Reset Filter ]
+Ditemukan X catatan
 ```
 
-### Cara kerja
+### Pencarian Smart Search
 
-- Ketik kata kunci — pencarian **real-time** (langsung saat mengetik)
-- Pencarian mencari di:
-  - **Isi teks catatan** (tidak case-sensitive)
-  - **Tanggal** (format `YYYY-MM-DD`)
-- Catatan tetap diurutkan dari **terbaru ke terlama**
-- Jika tidak ada hasil: *"Tidak ada hasil ditemukan."*
-- Kosongkan kolom pencarian untuk menampilkan semua catatan kembali
+- Pencarian **real-time** — hasil langsung berubah saat mengetik
+- **Case-insensitive** (tidak peduli huruf besar/kecil)
+- Mencari di **isi catatan**, **tanggal**, dan **nama mood**
+- **Highlight** — kata kunci yang cocok ditandai kuning di hasil
+- Mendukung operator logika:
+  - `AND` — semua kata harus cocok (contoh: `kerja AND senang`)
+  - `OR` atau `|` — salah satu kata cocok (contoh: `senang OR bahagia`)
+  - `NOT` atau `-` — mengecualikan kata (contoh: `hari NOT buruk`)
 
-### Contoh pencarian
+### Filter Mood
 
-| Kata kunci | Hasil |
-|------------|-------|
-| `presentasi` | Catatan yang mengandung kata "presentasi" |
-| `2026-08` | Semua catatan di bulan Agustus 2026 |
-| `senang` | Catatan yang teksnya mengandung "senang" |
+- Klik emoji mood untuk memfilter — bisa pilih **lebih dari satu**
+- Klik lagi untuk membatalkan pilihan
+- Hanya catatan dengan mood terpilih yang ditampilkan
+
+### Filter Periode
+
+| Tombol | Hasil |
+|--------|-------|
+| **Semua** | Tampilkan semua tanggal (default) |
+| **Hari Ini** | Hanya catatan hari ini |
+| **Minggu Ini** | 7 hari terakhir |
+| **Bulan Ini** | Dari tanggal 1 bulan ini |
+| **Kustom** | Pilih rentang tanggal sendiri (dari — sampai) |
+
+### Kombinasi Filter
+
+Anda bisa menggabungkan **kata kunci + mood + periode** sekaligus. Filter aktif ditampilkan sebagai **chip/tag** di bawah panel — klik chip untuk menghapus filter tersebut, atau klik **Reset Filter** untuk mengembalikan semua ke default.
+
+### Pengurutan Hasil
+
+| Opsi | Keterangan |
+|------|------------|
+| **Terbaru** | Catatan terbaru di atas (default) |
+| **Terlama** | Catatan lama di atas |
+| **Berdasarkan Mood** | Dikelompokkan urut Senang → Cemas |
+
+### Contoh penggunaan
+
+| Filter / Kata kunci | Hasil |
+|---------------------|-------|
+| `presentasi` | Catatan yang mengandung "presentasi" |
+| `2026-08` | Catatan di bulan Agustus 2026 |
+| Mood 😊 + Minggu Ini | Catatan senang 7 hari terakhir |
+| `kerja AND NOT stres` | Catatan berisi "kerja" tanpa kata "stres" |
 
 ---
 

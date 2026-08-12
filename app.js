@@ -2,6 +2,14 @@ const STORAGE_KEY = 'journal_entries';
 const MOOD_EMOJIS = { senang: '😊', biasa: '😐', sedih: '😢', marah: '😠', cemas: '😰' };
 const MOOD_COLORS = { senang: '#22c55e', biasa: '#eab308', sedih: '#3b82f6', marah: '#ef4444', cemas: '#a855f7' };
 const MOOD_LABELS = { senang: 'Senang', biasa: 'Biasa', sedih: 'Sedih', marah: 'Marah', cemas: 'Cemas' };
+const MOOD_ORDER = { senang: 0, biasa: 1, sedih: 2, marah: 3, cemas: 4 };
+const DATE_PRESET_LABELS = {
+  all: 'Semua waktu',
+  today: 'Hari ini',
+  week: 'Minggu ini',
+  month: 'Bulan ini',
+  custom: 'Rentang kustom'
+};
 
 let editingId = null;
 let moodChart = null;
@@ -12,6 +20,13 @@ const dateInput = $('#entry-date');
 const moodInput = $('#selected-mood');
 const textInput = $('#entry-text');
 const searchInput = $('#search-input');
+const sortSelect = $('#sort-select');
+const filterDateFrom = $('#filter-date-from');
+const filterDateTo = $('#filter-date-to');
+const customDateRange = $('#custom-date-range');
+const activeFiltersEl = $('#active-filters');
+const clearFiltersBtn = $('#clear-filters');
+const searchResultsCount = $('#search-results-count');
 const feed = $('#entries-feed');
 const emptyState = $('#empty-state');
 const submitBtn = $('#submit-btn');
@@ -31,6 +46,31 @@ function init() {
   form.addEventListener('submit', handleSubmit);
   cancelBtn.addEventListener('click', resetForm);
   searchInput.addEventListener('input', renderFeed);
+  sortSelect.addEventListener('change', renderFeed);
+  filterDateFrom.addEventListener('change', renderFeed);
+  filterDateTo.addEventListener('change', renderFeed);
+  clearFiltersBtn.addEventListener('click', clearAllFilters);
+
+  document.querySelectorAll('.filter-mood-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      renderFeed();
+    });
+  });
+
+  document.querySelectorAll('.date-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.date-preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const isCustom = btn.dataset.preset === 'custom';
+      customDateRange.hidden = !isCustom;
+      if (!isCustom) {
+        filterDateFrom.value = '';
+        filterDateTo.value = '';
+      }
+      renderFeed();
+    });
+  });
 
   refreshDashboard();
 }
@@ -191,20 +231,259 @@ function deleteEntry(id) {
   refreshDashboard();
 }
 
-function renderFeed() {
-  const query = searchInput.value.toLowerCase().trim();
-  let entries = getEntries();
-  if (query) entries = entries.filter(e => e.text.toLowerCase().includes(query) || e.date.includes(query));
+function getSelectedMoods() {
+  return [...document.querySelectorAll('.filter-mood-btn.active')].map(btn => btn.dataset.mood);
+}
 
-  entries.sort((a, b) => b.date.localeCompare(a.date));
+function getActiveDatePreset() {
+  return document.querySelector('.date-preset-btn.active')?.dataset.preset || 'all';
+}
+
+function toISODate(date) {
+  return date.toISOString().split('T')[0];
+}
+
+function getDateRange() {
+  const preset = getActiveDatePreset();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  switch (preset) {
+    case 'today':
+      return { from: toISODate(today), to: toISODate(today) };
+    case 'week': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 6);
+      return { from: toISODate(start), to: toISODate(today) };
+    }
+    case 'month': {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      return { from: toISODate(start), to: toISODate(today) };
+    }
+    case 'custom': {
+      const from = filterDateFrom.value;
+      const to = filterDateTo.value;
+      if (!from && !to) return null;
+      return {
+        from: from || '0000-01-01',
+        to: to || '9999-12-31'
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+function matchesDateRange(entry, range) {
+  if (!range) return true;
+  return entry.date >= range.from && entry.date <= range.to;
+}
+
+function entryHaystack(entry) {
+  return `${entry.text.toLowerCase()} ${entry.date} ${MOOD_LABELS[entry.mood].toLowerCase()}`;
+}
+
+function matchesSearch(entry, query) {
+  const trimmed = query.trim();
+  if (!trimmed) return true;
+
+  const haystack = entryHaystack(entry);
+  const lower = trimmed.toLowerCase();
+  const hasOperators = /\s+OR\s+|\||\s+AND\s+|NOT\s+|(?:^|\s)-\S+/i.test(trimmed);
+
+  if (!hasOperators) return haystack.includes(lower);
+
+  const orGroups = trimmed.split(/\s+OR\s+|\|/i).map(g => g.trim()).filter(Boolean);
+  return orGroups.some(group => {
+    const andParts = group.split(/\s+AND\s+/i).map(p => p.trim()).filter(Boolean);
+    return andParts.every(part => {
+      if (/^NOT\s+/i.test(part)) {
+        const term = part.replace(/^NOT\s+/i, '').toLowerCase();
+        return term && !haystack.includes(term);
+      }
+      if (/^-\S+/.test(part)) {
+        const term = part.slice(1).toLowerCase();
+        return term && !haystack.includes(term);
+      }
+      return haystack.includes(part.toLowerCase());
+    });
+  });
+}
+
+function getHighlightTerms(query) {
+  if (!query.trim()) return [];
+
+  const terms = [];
+  query.split(/\s+OR\s+|\|/i).forEach(group => {
+    group.split(/\s+AND\s+/i).forEach(part => {
+      let term = part.trim();
+      if (/^NOT\s+/i.test(term)) term = term.replace(/^NOT\s+/i, '');
+      else if (/^-\S+/.test(term)) term = term.slice(1);
+      if (term) terms.push(term);
+    });
+  });
+
+  return [...new Set(terms)].sort((a, b) => b.length - a.length);
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightText(text, query) {
+  const safe = escapeHtml(text);
+  const terms = getHighlightTerms(query);
+  if (!terms.length) return safe;
+
+  const pattern = new RegExp(`(${terms.map(escapeRegex).join('|')})`, 'gi');
+  return safe.replace(pattern, '<mark class="search-highlight">$1</mark>');
+}
+
+function sortEntries(entries) {
+  const sortBy = sortSelect.value;
+  const sorted = [...entries];
+
+  if (sortBy === 'date-asc') {
+    sorted.sort((a, b) => a.date.localeCompare(b.date));
+  } else if (sortBy === 'mood') {
+    sorted.sort((a, b) => {
+      const moodDiff = MOOD_ORDER[a.mood] - MOOD_ORDER[b.mood];
+      return moodDiff !== 0 ? moodDiff : b.date.localeCompare(a.date);
+    });
+  } else {
+    sorted.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  return sorted;
+}
+
+function hasActiveFilters() {
+  return Boolean(
+    searchInput.value.trim() ||
+    getSelectedMoods().length ||
+    getActiveDatePreset() !== 'all' ||
+    filterDateFrom.value ||
+    filterDateTo.value
+  );
+}
+
+function renderActiveFilters() {
+  const chips = [];
+  const query = searchInput.value.trim();
+  const moods = getSelectedMoods();
+  const preset = getActiveDatePreset();
+  const range = getDateRange();
+
+  if (query) {
+    chips.push({ type: 'query', label: `Kata kunci: "${query}"` });
+  }
+
+  moods.forEach(mood => {
+    chips.push({ type: 'mood', mood, label: `${MOOD_EMOJIS[mood]} ${MOOD_LABELS[mood]}` });
+  });
+
+  if (preset === 'custom' && range) {
+    chips.push({
+      type: 'date-custom',
+      label: `📅 ${range.from} — ${range.to}`
+    });
+  } else if (preset !== 'all') {
+    chips.push({ type: 'date-preset', preset, label: `📅 ${DATE_PRESET_LABELS[preset]}` });
+  }
+
+  if (!chips.length) {
+    activeFiltersEl.hidden = true;
+    activeFiltersEl.innerHTML = '';
+    return;
+  }
+
+  activeFiltersEl.hidden = false;
+  activeFiltersEl.innerHTML = chips.map(chip => `
+    <button type="button" class="filter-chip" data-filter-type="${chip.type}"${chip.mood ? ` data-mood="${chip.mood}"` : ''}${chip.preset ? ` data-preset="${chip.preset}"` : ''}>
+      ${chip.label}
+      <span class="filter-chip-remove" aria-hidden="true">×</span>
+    </button>
+  `).join('');
+
+  activeFiltersEl.querySelectorAll('.filter-chip').forEach(chipEl => {
+    chipEl.addEventListener('click', () => removeFilterChip(chipEl));
+  });
+}
+
+function removeFilterChip(chipEl) {
+  const { filterType, mood, preset } = chipEl.dataset;
+
+  if (filterType === 'query') searchInput.value = '';
+  if (filterType === 'mood') {
+    document.querySelector(`.filter-mood-btn[data-mood="${mood}"]`)?.classList.remove('active');
+  }
+  if (filterType === 'date-preset' || filterType === 'date-custom') {
+    document.querySelectorAll('.date-preset-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.preset === 'all');
+    });
+    customDateRange.hidden = true;
+    filterDateFrom.value = '';
+    filterDateTo.value = '';
+  }
+
+  renderFeed();
+}
+
+function clearAllFilters() {
+  searchInput.value = '';
+  document.querySelectorAll('.filter-mood-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.date-preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === 'all');
+  });
+  customDateRange.hidden = true;
+  filterDateFrom.value = '';
+  filterDateTo.value = '';
+  sortSelect.value = 'date-desc';
+  renderFeed();
+}
+
+function getFilteredEntries() {
+  const query = searchInput.value.trim();
+  const moods = getSelectedMoods();
+  const range = getDateRange();
+
+  return sortEntries(
+    getEntries().filter(entry =>
+      matchesMood(entry, moods) &&
+      matchesDateRange(entry, range) &&
+      matchesSearch(entry, query)
+    )
+  );
+}
+
+function matchesMood(entry, moods) {
+  if (!moods.length) return true;
+  return moods.includes(entry.mood);
+}
+
+function renderFeed() {
+  const query = searchInput.value.trim();
+  const allEntries = getEntries();
+  const entries = getFilteredEntries();
+  const filtersActive = hasActiveFilters();
+
+  renderActiveFilters();
+
+  if (allEntries.length) {
+    searchResultsCount.textContent = filtersActive
+      ? `Ditemukan ${entries.length} catatan`
+      : `Menampilkan ${entries.length} catatan`;
+  } else {
+    searchResultsCount.textContent = '';
+  }
 
   if (!entries.length) {
     feed.innerHTML = '';
     emptyState.style.display = 'block';
-    if (query) {
+    if (filtersActive) {
       emptyState.querySelector('.empty-icon').textContent = '🔎';
       emptyState.querySelector('.empty-title').textContent = 'Tidak ada hasil';
-      emptyState.querySelector('.empty-desc').textContent = 'Coba kata kunci lain atau hapus pencarian.';
+      emptyState.querySelector('.empty-desc').textContent = 'Coba ubah filter atau kata kunci pencarian.';
     } else {
       emptyState.querySelector('.empty-icon').textContent = '📭';
       emptyState.querySelector('.empty-title').textContent = 'Belum ada catatan';
@@ -223,7 +502,7 @@ function renderFeed() {
           ${MOOD_LABELS[e.mood]}
         </span>
       </div>
-      <div class="entry-text">${escapeHtml(e.text)}</div>
+      <div class="entry-text">${highlightText(e.text, query)}</div>
       <div class="entry-actions">
         <button class="btn-edit" onclick="editEntry('${e.id}')">✏️ Edit</button>
         <button class="btn-delete" onclick="deleteEntry('${e.id}')">🗑️ Hapus</button>
