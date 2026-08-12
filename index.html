@@ -139,9 +139,66 @@
             <p class="section-desc">Semua catatan jurnal kamu</p>
           </div>
         </div>
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="search-input" placeholder="Cari catatan berdasarkan kata kunci atau tanggal...">
+        <div class="search-panel">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Cari kata kunci, tanggal, mood... (AND, OR, NOT)">
+          </div>
+
+          <div class="filter-panel">
+            <div class="filter-group">
+              <span class="filter-label">Filter Mood</span>
+              <div class="mood-filter" id="mood-filter" role="group" aria-label="Filter mood">
+                <button type="button" class="filter-mood-btn" data-mood="senang" title="Senang">
+                  <span class="mood-emoji">😊</span><span class="mood-name">Senang</span>
+                </button>
+                <button type="button" class="filter-mood-btn" data-mood="biasa" title="Biasa">
+                  <span class="mood-emoji">😐</span><span class="mood-name">Biasa</span>
+                </button>
+                <button type="button" class="filter-mood-btn" data-mood="sedih" title="Sedih">
+                  <span class="mood-emoji">😢</span><span class="mood-name">Sedih</span>
+                </button>
+                <button type="button" class="filter-mood-btn" data-mood="marah" title="Marah">
+                  <span class="mood-emoji">😠</span><span class="mood-name">Marah</span>
+                </button>
+                <button type="button" class="filter-mood-btn" data-mood="cemas" title="Cemas">
+                  <span class="mood-emoji">😰</span><span class="mood-name">Cemas</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Periode</span>
+              <div class="date-presets" id="date-presets" role="group" aria-label="Filter periode">
+                <button type="button" class="date-preset-btn active" data-preset="all">Semua</button>
+                <button type="button" class="date-preset-btn" data-preset="today">Hari Ini</button>
+                <button type="button" class="date-preset-btn" data-preset="week">Minggu Ini</button>
+                <button type="button" class="date-preset-btn" data-preset="month">Bulan Ini</button>
+                <button type="button" class="date-preset-btn" data-preset="custom">Kustom</button>
+              </div>
+              <div class="date-range-inputs" id="custom-date-range" hidden>
+                <input type="date" id="filter-date-from" aria-label="Dari tanggal">
+                <span class="date-range-sep">s/d</span>
+                <input type="date" id="filter-date-to" aria-label="Sampai tanggal">
+              </div>
+            </div>
+
+            <div class="filter-toolbar">
+              <div class="filter-group filter-group-sort">
+                <label class="filter-label" for="sort-select">Urutkan</label>
+                <select id="sort-select" class="sort-select">
+                  <option value="date-desc">Terbaru</option>
+                  <option value="date-asc">Terlama</option>
+                  <option value="mood">Berdasarkan Mood</option>
+                </select>
+              </div>
+              <button type="button" class="btn-clear-filters" id="clear-filters">Reset Filter</button>
+            </div>
+
+            <div class="active-filters" id="active-filters" hidden></div>
+          </div>
+
+          <p class="search-results-count" id="search-results-count" aria-live="polite"></p>
         </div>
         <div id="entries-feed"></div>
         <div id="empty-state" class="empty-state">
